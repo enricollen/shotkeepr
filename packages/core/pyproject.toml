@@ -4,7 +4,11 @@ version = "0.1.0"
 description = "Nucleo di ShotKeepr: dominio, casi d'uso, adattatori e API locale"
 requires-python = ">=3.12,<3.13"
 license = "AGPL-3.0-or-later"
-dependencies = ["shotkeepr-plugin-sdk"]
+dependencies = [
+    "alembic>=1.13",
+    "shotkeepr-plugin-sdk",
+    "sqlalchemy>=2.0.30",
+]
 
 [project.scripts]
 shotkeepr-core = "shotkeepr.core.__main__:main"

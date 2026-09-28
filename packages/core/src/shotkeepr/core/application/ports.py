@@ -7,6 +7,7 @@ from collections.abc import Sequence
 from typing import Protocol
 
 from shotkeepr.core.domain.catalog import Session, Shot
+from shotkeepr.core.domain.configuration import AppSettings
 
 
 class SessionRepository(Protocol):
@@ -21,3 +22,18 @@ class ShotRepository(Protocol):
     def get(self, shot_id: uuid.UUID) -> Shot | None: ...
     def list_by_session(self, session_id: uuid.UUID) -> Sequence[Shot]: ...
     def find_by_hash(self, session_id: uuid.UUID, content_hash: str) -> Shot | None: ...
+
+
+class SettingsRepository(Protocol):
+    def load(self) -> AppSettings | None: ...
+    def save(self, settings: AppSettings) -> None: ...
+
+
+class SecretStoreUnavailableError(RuntimeError):
+    """Nessun portachiavi utilizzabile nell'ambiente corrente."""
+
+
+class SecretStore(Protocol):
+    def get(self, ref: str) -> str | None: ...
+    def set(self, ref: str, secret: str) -> None: ...
+    def delete(self, ref: str) -> None: ...

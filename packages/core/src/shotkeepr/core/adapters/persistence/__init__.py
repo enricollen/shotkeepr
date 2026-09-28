@@ -6,5 +6,12 @@ from shotkeepr.core.adapters.persistence.repositories import (
     SqlSessionRepository,
     SqlShotRepository,
 )
+from shotkeepr.core.adapters.persistence.settings import SqlSettingsRepository
 
-__all__ = ["Database", "SqlSessionRepository", "SqlShotRepository", "upgrade_to_head"]
+__all__ = [
+    "Database",
+    "SqlSessionRepository",
+    "SqlSettingsRepository",
+    "SqlShotRepository",
+    "upgrade_to_head",
+]

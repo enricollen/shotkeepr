@@ -42,6 +42,7 @@ EXPECTED_TABLES = {
     "selection_runs",
     "decisions",
     "manual_status_changes",
+    "app_settings",
 }
 
 

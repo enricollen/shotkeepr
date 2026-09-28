@@ -222,3 +222,12 @@ class ManualStatusChangeRow(Base):
     old_status: Mapped[str] = mapped_column(String(8))
     new_status: Mapped[str] = mapped_column(String(8))
     at: Mapped[datetime] = mapped_column(TS)
+
+
+class AppSettingsRow(Base):
+    """ent-029 — riga unica con le preferenze serializzate (mai credenziali)."""
+
+    __tablename__ = "app_settings"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    data: Mapped[dict[str, Any]]
+    updated_at: Mapped[datetime] = mapped_column(TS)

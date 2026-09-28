@@ -6,6 +6,7 @@ requires-python = ">=3.12,<3.13"
 license = "AGPL-3.0-or-later"
 dependencies = [
     "alembic>=1.13",
+    "keyring>=25",
     "shotkeepr-plugin-sdk",
     "sqlalchemy>=2.0.30",
 ]

@@ -1,0 +1,95 @@
+[project]
+name = "shotkeepr-workspace"
+version = "0.1.0"
+description = "ShotKeepr — selezione assistita delle foto migliori (workspace)"
+requires-python = ">=3.12,<3.13"
+license = "AGPL-3.0-or-later"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "ruff>=0.6",
+    "mypy>=1.11",
+    "pytest>=8.3",
+    "pytest-cov>=5.0",
+    "import-linter>=2.1",
+    "pre-commit>=3.8",
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = ["packages/core", "packages/desktop", "packages/plugin-sdk"]
+
+[tool.uv.sources]
+shotkeepr-core = { workspace = true }
+shotkeepr-desktop = { workspace = true }
+shotkeepr-plugin-sdk = { workspace = true }
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["packages/core/src", "packages/desktop/src", "packages/plugin-sdk/src"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "N", "SIM", "RUF", "S", "PTH", "C4", "PL"]
+ignore = ["PLR0913", "PLR2004"]
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**" = ["S101", "PLR2004", "S108"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+namespace_packages = true
+explicit_package_bases = true
+mypy_path = ["packages/core/src", "packages/desktop/src", "packages/plugin-sdk/src"]
+files = ["packages/core/src", "packages/desktop/src", "packages/plugin-sdk/src"]
+
+[tool.pytest.ini_options]
+testpaths = ["packages/core/tests", "packages/desktop/tests", "packages/plugin-sdk/tests"]
+addopts = "-ra --import-mode=importlib"
+
+[tool.coverage.run]
+branch = true
+source = ["shotkeepr"]
+
+[tool.coverage.report]
+fail_under = 80
+show_missing = true
+skip_covered = true
+
+[tool.importlinter]
+root_packages = ["shotkeepr"]
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "Architettura esagonale del nucleo (ADR-001)"
+type = "layers"
+layers = [
+    "shotkeepr.core.api",
+    "shotkeepr.core.adapters",
+    "shotkeepr.core.application",
+    "shotkeepr.core.domain",
+]
+
+[[tool.importlinter.contracts]]
+name = "Il dominio è puro: nessuna infrastruttura né GUI (ADR-001, ADR-011)"
+type = "forbidden"
+source_modules = ["shotkeepr.core.domain", "shotkeepr.core.application"]
+forbidden_modules = [
+    "PySide6", "sqlalchemy", "alembic", "fastapi", "starlette", "uvicorn",
+    "qdrant_client", "litellm", "onnxruntime", "rawpy", "keyring", "httpx",
+]
+
+[[tool.importlinter.contracts]]
+name = "GUI e nucleo comunicano solo via API (ADR-002, ADR-003)"
+type = "independence"
+modules = ["shotkeepr.core", "shotkeepr.desktop"]
+
+[[tool.importlinter.contracts]]
+name = "Il plugin SDK non dipende dal nucleo né dalla GUI (ADR-008)"
+type = "forbidden"
+source_modules = ["shotkeepr.plugin_sdk"]
+forbidden_modules = ["shotkeepr.core", "shotkeepr.desktop"]

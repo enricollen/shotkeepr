@@ -1,0 +1,17 @@
+[project]
+name = "shotkeepr-core"
+version = "0.1.0"
+description = "Nucleo di ShotKeepr: dominio, casi d'uso, adattatori e API locale"
+requires-python = ">=3.12,<3.13"
+license = "AGPL-3.0-or-later"
+dependencies = ["shotkeepr-plugin-sdk"]
+
+[project.scripts]
+shotkeepr-core = "shotkeepr.core.__main__:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/shotkeepr"]

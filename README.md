@@ -49,3 +49,27 @@ scripts/generate_client.sh
 
 Il canale WebSocket (non descritto da OpenAPI) ha un wrapper scritto a mano in
 `packages/desktop/src/shotkeepr/desktop/api_events.py`.
+
+## Applicazione desktop
+
+```bash
+uv run shotkeepr
+```
+
+La shell PySide6 avvia un processo nativo del nucleo e lo arresta alla chiusura.
+Contiene albero delle cartelle, area griglia e pannelli Dettagli/Criteri; la pipeline
+fotografica non e' ancora implementata. I temi chiaro/scuro vengono caricati e
+salvati tramite l'API. Le richieste HTTP girano fuori dal thread grafico.
+Qt 6 gestisce automaticamente gli schermi HiDPI; il layout supporta 1366x768.
+Scorciatoie: Ctrl+O apre una cartella, Ctrl+R riprova la connessione.
+
+Per collegarsi a un nucleo gia' avviato, senza gestirne il processo:
+
+```bash
+uv run shotkeepr --core-url http://127.0.0.1:8321 --token-file /percorso/api.token
+```
+
+Il nucleo accetta anche `--data-dir` e `--runtime-dir` per isolare dati e credenziali
+di avvio. Su Linux servono le librerie di sistema Qt (OpenGL/EGL, fontconfig,
+FreeType, X11, xkbcommon, GLib e D-Bus) oltre a una sessione grafica.
+I test della shell usano Qt offscreen: `QT_QPA_PLATFORM=offscreen uv run pytest packages/desktop/tests`.

@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 
 from shotkeepr.core import __main__ as entrypoint
@@ -38,3 +40,19 @@ def test_serve_command_wires_dependencies_and_starts_server(
     assert calls["port"] == 12345
     assert calls["runtime"] == data_dir / "run"
     assert data_dir.exists()  # type: ignore[union-attr]
+
+
+def test_serve_accepts_isolated_data_and_runtime_directories(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    calls: list[Path] = []
+
+    def fake_server(service: object, runtime: Path, *, port: int | None) -> None:
+        calls.append(runtime)
+
+    monkeypatch.setattr(entrypoint, "run_server", fake_server)
+    data = tmp_path / "data"
+    runtime = tmp_path / "private-runtime"
+    assert main(["serve", "--data-dir", str(data), "--runtime-dir", str(runtime)]) == 0
+    assert calls == [runtime]
+    assert (data / "shotkeepr.db").exists()

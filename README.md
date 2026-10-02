@@ -29,3 +29,23 @@ uv run lint-imports        # confini architetturali (ADR-001, ADR-012)
 uv run pytest --cov        # copertura minima 80% (NFR-023)
 uv run pre-commit install
 ```
+
+## API locale e client tipizzato
+
+Il nucleo espone `/api/v1` (FastAPI, bind `127.0.0.1`, token locale generato
+all'avvio) e un canale WebSocket per gli eventi di avanzamento (ADR-003):
+
+```bash
+uv run shotkeepr-core serve [--port N]   # token e porta scritti in <app-data>/run/
+```
+
+La GUI parla col nucleo solo via HTTP/WebSocket (ADR-002): `packages/desktop/src/shotkeepr/desktop/api_client/`
+è un client tipizzato **generato automaticamente** dal contratto OpenAPI — non va modificato a mano.
+Dopo ogni cambio alle rotte del nucleo, rigenerarlo con:
+
+```bash
+scripts/generate_client.sh
+```
+
+Il canale WebSocket (non descritto da OpenAPI) ha un wrapper scritto a mano in
+`packages/desktop/src/shotkeepr/desktop/api_events.py`.

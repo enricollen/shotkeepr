@@ -12,7 +12,7 @@ trap 'rm -rf "$SCHEMA" "$OUT"' EXIT
 
 uv run python scripts/export_openapi.py "$SCHEMA"
 rm -rf "$OUT"
-uv run openapi-python-client generate --path "$SCHEMA" --output-path "$OUT" --meta none
+uv run openapi-python-client generate --path "$SCHEMA" --config scripts/openapi-client.yaml --output-path "$OUT" --meta none
 
 rm -rf "$TARGET"
 mkdir -p "$TARGET"
@@ -35,4 +35,3 @@ open(path, "w", encoding="utf-8").write(text.replace(old, new, 1))
 PY
 
 echo "Client rigenerato in $TARGET"
-echo "Ricorda di riaggiungere events.py (wrapper WebSocket scritto a mano, non generato)."

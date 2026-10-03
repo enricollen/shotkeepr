@@ -17,10 +17,15 @@ dev = [
     "pre-commit>=3.8",
     "httpx>=0.27",
     "openapi-python-client>=0.21",
+    "onnx>=1.17",
+    "shotkeepr-core[cpu]",
 ]
 
 [tool.uv]
 package = false
+conflicts = [
+    [{ package = "shotkeepr-core", extra = "cpu" }, { package = "shotkeepr-core", extra = "cuda" }],
+]
 
 [tool.uv.workspace]
 members = ["packages/core", "packages/desktop", "packages/plugin-sdk"]
@@ -52,6 +57,10 @@ explicit_package_bases = true
 mypy_path = ["packages/core/src", "packages/desktop/src", "packages/plugin-sdk/src"]
 files = ["packages/core/src", "packages/desktop/src", "packages/plugin-sdk/src"]
 exclude = ["packages/desktop/src/shotkeepr/desktop/api_client"]
+
+[[tool.mypy.overrides]]
+module = ["rawpy"]
+implicit_reexport = true
 
 [tool.pytest.ini_options]
 testpaths = ["packages/core/tests", "packages/desktop/tests", "packages/plugin-sdk/tests"]
@@ -88,6 +97,7 @@ source_modules = ["shotkeepr.core.domain", "shotkeepr.core.application"]
 forbidden_modules = [
     "PySide6", "sqlalchemy", "alembic", "fastapi", "starlette", "uvicorn",
     "qdrant_client", "litellm", "onnxruntime", "rawpy", "keyring", "httpx",
+    "numpy", "onnx", "filelock", "PIL", "pillow_heif",
 ]
 
 [[tool.importlinter.contracts]]

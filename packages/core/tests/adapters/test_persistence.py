@@ -43,6 +43,10 @@ EXPECTED_TABLES = {
     "decisions",
     "manual_status_changes",
     "app_settings",
+    "exposure_measurements",
+    "shot_reviews",
+    "burst_grouping",
+    "sharpness_measurements",
 }
 
 

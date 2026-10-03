@@ -1,0 +1,1 @@
+"""Temporal grouping composition root."""

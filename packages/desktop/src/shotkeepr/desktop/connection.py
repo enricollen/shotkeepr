@@ -57,6 +57,7 @@ class RequestWorker(QThread):
 
 
 class CoreConnection(QObject):
+    endpoint_changed = Signal(str, str)
     settings_received = Signal(object)
     status_changed = Signal(bool, str)
     busy_changed = Signal(bool)
@@ -73,6 +74,7 @@ class CoreConnection(QObject):
 
     def connect_to(self, url: str, token: str) -> None:
         self._url, self._token = url, token
+        self.endpoint_changed.emit(url, token)
         self._timer.start()
         self.refresh()
 

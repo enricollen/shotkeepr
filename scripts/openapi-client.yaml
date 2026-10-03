@@ -1,0 +1,2 @@
+content_type_overrides:
+  image/jpeg: application/octet-stream

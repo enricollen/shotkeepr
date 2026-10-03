@@ -6,7 +6,8 @@ import uuid
 from collections.abc import Sequence
 from pathlib import Path
 
-from sqlalchemy import select
+from sqlalchemy import func, select
+from sqlalchemy.exc import SQLAlchemyError
 
 from shotkeepr.core.adapters.persistence.db import Database
 from shotkeepr.core.adapters.persistence.models import (
@@ -25,6 +26,7 @@ from shotkeepr.core.domain.catalog import (
     Shot,
     ShotMetadata,
 )
+from shotkeepr.core.domain.catalog.ingestion import CatalogImportError
 
 
 def _session_to_domain(row: SessionRow) -> Session:
@@ -142,37 +144,71 @@ def _shot_to_domain(row: ShotRow) -> Shot:
     )
 
 
+def _shot_to_row(shot: Shot) -> ShotRow:
+    return ShotRow(
+        id=shot.shot_id,
+        session_id=shot.session_id,
+        content_hash=shot.content_hash,
+        capture_time=shot.capture_time,
+        group_id=shot.group_id,
+        files=[_file_to_row(file) for file in shot.files],
+    )
+
+
 class SqlShotRepository:
     def __init__(self, db: Database) -> None:
         self._db = db
 
     def add_many(self, shots: Sequence[Shot]) -> None:
         with self._db.transaction() as tx:
-            tx.add_all(
-                ShotRow(
-                    id=s.shot_id,
-                    session_id=s.session_id,
-                    content_hash=s.content_hash,
-                    capture_time=s.capture_time,
-                    group_id=s.group_id,
-                    files=[_file_to_row(f) for f in s.files],
-                )
-                for s in shots
-            )
+            tx.add_all(_shot_to_row(shot) for shot in shots)
 
     def get(self, shot_id: uuid.UUID) -> Shot | None:
         with self._db.transaction() as tx:
             row = tx.get(ShotRow, shot_id)
             return None if row is None else _shot_to_domain(row)
 
-    def list_by_session(self, session_id: uuid.UUID) -> Sequence[Shot]:
+    def list_by_session(
+        self,
+        session_id: uuid.UUID,
+        *,
+        limit: int | None = None,
+        offset: int = 0,
+        group_id: uuid.UUID | None = None,
+        ungrouped: bool = False,
+    ) -> Sequence[Shot]:
+        if group_id is not None and ungrouped:
+            raise ValueError("filtro gruppo e senza gruppo non combinabili")
+        if offset < 0 or (limit is not None and limit < 1):
+            raise ValueError("paginazione degli scatti non valida")
         with self._db.transaction() as tx:
             stmt = (
                 select(ShotRow)
                 .where(ShotRow.session_id == session_id)
                 .order_by(ShotRow.capture_time, ShotRow.id)
+                .limit(limit)
+                .offset(offset)
             )
+            if group_id is not None:
+                stmt = stmt.where(ShotRow.group_id == group_id)
+            elif ungrouped:
+                stmt = stmt.where(ShotRow.group_id.is_(None))
             return [_shot_to_domain(r) for r in tx.scalars(stmt).all()]
+
+    def count_by_session(
+        self, session_id: uuid.UUID, *, group_id: uuid.UUID | None = None, ungrouped: bool = False
+    ) -> int:
+        if group_id is not None and ungrouped:
+            raise ValueError("filtro gruppo e senza gruppo non combinabili")
+        with self._db.transaction() as tx:
+            statement = (
+                select(func.count()).select_from(ShotRow).where(ShotRow.session_id == session_id)
+            )
+            if group_id is not None:
+                statement = statement.where(ShotRow.group_id == group_id)
+            elif ungrouped:
+                statement = statement.where(ShotRow.group_id.is_(None))
+            return int(tx.scalar(statement) or 0)
 
     def find_by_hash(self, session_id: uuid.UUID, content_hash: str) -> Shot | None:
         with self._db.transaction() as tx:
@@ -181,3 +217,37 @@ class SqlShotRepository:
             )
             row = tx.scalars(stmt).one_or_none()
             return None if row is None else _shot_to_domain(row)
+
+
+class SqlCatalogWriter:
+    """Pubblica scatti, esclusioni e stato della sessione nella stessa transazione."""
+
+    def __init__(self, db: Database) -> None:
+        self._db = db
+
+    def validate_destination(self, source: Path) -> None:
+        database = self._db.engine.url.database
+        if (
+            database is not None
+            and database != ":memory:"
+            and Path(database).resolve().is_relative_to(source.resolve())
+        ):
+            raise CatalogImportError("il database deve essere esterno alla cartella sorgente")
+
+    def save_import(self, session: Session, shots: Sequence[Shot]) -> None:
+        if session.status is not SessionStatus.IMPORTED:
+            raise CatalogImportError("solo una sessione importata puo' essere pubblicata")
+        if any(shot.session_id != session.session_id for shot in shots):
+            raise CatalogImportError("uno scatto appartiene a una sessione diversa")
+        self.validate_destination(session.source_folder)
+        try:
+            with self._db.transaction() as tx:
+                row = tx.get(SessionRow, session.session_id)
+                if row is None or row.status != SessionStatus.IMPORTING.value:
+                    raise CatalogImportError("sessione non presente o non in importazione")
+                tx.add_all(_shot_to_row(shot) for shot in shots)
+                row.excluded = _excluded_rows(session)
+                row.checkpoint = session.checkpoint
+                row.status = session.status.value
+        except SQLAlchemyError as exc:
+            raise CatalogImportError("salvataggio del catalogo non riuscito") from exc

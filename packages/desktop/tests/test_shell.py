@@ -31,7 +31,7 @@ def test_layout_fits_minimum_display(shell: MainWindow) -> None:
     assert shell.height() <= 768
     assert shell.minimumWidth() <= 1366
     assert shell.minimumHeight() <= 768
-    assert shell.detail_tabs.count() == 2
+    assert shell.detail_tabs.count() == 3
     assert shell.photo_grid.count() == 0
     assert shell.photo_stack.currentWidget() == shell.empty_state
     assert "non e' ancora disponibile" in shell.empty_state.text()

@@ -1,0 +1,10 @@
+# Explicit opt-in for writing sidecars; the base Compose file stays read-only.
+services:
+  core:
+    volumes:
+      - type: bind
+        source: ${SHOTKEEPR_PHOTOS_DIR:?Impostare SHOTKEEPR_PHOTOS_DIR sulla cartella foto}
+        target: /photos
+        read_only: false
+        bind:
+          create_host_path: false

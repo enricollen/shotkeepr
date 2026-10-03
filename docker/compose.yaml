@@ -1,0 +1,67 @@
+name: shotkeepr
+
+services:
+  core:
+    image: shotkeepr-core:cpu
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      args:
+        RUNTIME: cpu
+        APP_UID: ${SHOTKEEPR_UID:-1000}
+        APP_GID: ${SHOTKEEPR_GID:-1000}
+    ports:
+      - "127.0.0.1:${SHOTKEEPR_PORT:-8321}:8321"
+    volumes:
+      - core-data:/data
+      - type: bind
+        source: ${SHOTKEEPR_RUNTIME_DIR:-../data/run}
+        target: /run/shotkeepr
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${SHOTKEEPR_PHOTOS_DIR:?Impostare SHOTKEEPR_PHOTOS_DIR sulla cartella foto}
+        target: /photos
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ../models
+        target: /models
+        read_only: true
+        bind:
+          create_host_path: false
+    depends_on:
+      qdrant:
+        condition: service_healthy
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp:size=128m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    stop_grace_period: 35s
+
+  qdrant:
+    image: shotkeepr-qdrant:1.15.5
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.qdrant
+    volumes:
+      - qdrant-data:/qdrant/storage
+    read_only: true
+    tmpfs:
+      - /tmp:size=128m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    stop_grace_period: 10s
+
+volumes:
+  core-data:
+  qdrant-data:

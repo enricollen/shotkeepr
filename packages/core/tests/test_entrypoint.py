@@ -29,15 +29,33 @@ def test_serve_command_wires_dependencies_and_starts_server(
 
     calls: dict[str, object] = {}
 
-    def fake_run_server(service: object, runtime: object, *, port: int | None) -> None:
+    def fake_run_server(
+        service: object,
+        runtime: object,
+        *,
+        port: int | None,
+        host: str,
+        import_jobs: object,
+        exposure_service: object,
+        review_service: object,
+        grouping_service: object,
+        sharpness_service: object,
+    ) -> None:
         calls["service"] = service
         calls["runtime"] = runtime
         calls["port"] = port
+        calls["host"] = host
+        calls["exposure_service"] = exposure_service
+        calls["review_service"] = review_service
+        calls["grouping_service"] = grouping_service
+        calls["sharpness_service"] = sharpness_service
 
     monkeypatch.setattr(entrypoint, "run_server", fake_run_server)
 
     assert main(["serve", "--port", "12345"]) == 0
     assert calls["port"] == 12345
+    assert calls["exposure_service"] is not None
+    assert calls["host"] == "127.0.0.1"
     assert calls["runtime"] == data_dir / "run"
     assert data_dir.exists()  # type: ignore[union-attr]
 
@@ -47,7 +65,18 @@ def test_serve_accepts_isolated_data_and_runtime_directories(
 ) -> None:
     calls: list[Path] = []
 
-    def fake_server(service: object, runtime: Path, *, port: int | None) -> None:
+    def fake_server(
+        service: object,
+        runtime: Path,
+        *,
+        port: int | None,
+        host: str,
+        import_jobs: object,
+        exposure_service: object,
+        review_service: object,
+        grouping_service: object,
+        sharpness_service: object,
+    ) -> None:
         calls.append(runtime)
 
     monkeypatch.setattr(entrypoint, "run_server", fake_server)

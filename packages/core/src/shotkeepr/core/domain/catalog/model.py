@@ -15,10 +15,13 @@ def _now() -> datetime:
 
 class SessionStatus(StrEnum):
     CREATED = "CREATED"
+    IMPORTING = "IMPORTING"
+    IMPORTED = "IMPORTED"
     ANALYZING = "ANALYZING"
     PAUSED = "PAUSED"
     ANALYZED = "ANALYZED"
     FAILED = "FAILED"
+    CANCELLED = "CANCELLED"
 
 
 class FileKind(StrEnum):
@@ -74,6 +77,12 @@ class Shot:
     def is_raw_pair(self) -> bool:
         kinds = {f.kind for f in self.files}
         return kinds == {FileKind.RAW, FileKind.STANDARD}
+
+    @property
+    def preview_file(self) -> ImageFile | None:
+        if not self.files:
+            return None
+        return next((file for file in self.files if file.format == "JPEG"), self.files[0])
 
 
 @dataclass(frozen=True, slots=True)

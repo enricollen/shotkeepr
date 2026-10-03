@@ -9,6 +9,8 @@ from pathlib import Path
 
 from PySide6.QtCore import QObject, QProcess, QTimer, Signal
 
+CORE_SHUTDOWN_TIMEOUT_MS = 35000
+
 
 class CoreRuntime(QObject):
     ready = Signal(str, str)
@@ -79,7 +81,8 @@ class CoreRuntime(QObject):
         self._timer.stop()
         if self._process.state() != QProcess.ProcessState.NotRunning:
             self._process.terminate()
-            if not self._process.waitForFinished(2000):
+            # ExifTool puo' impiegare 30 s: lascia completare l'annullamento cooperativo.
+            if not self._process.waitForFinished(CORE_SHUTDOWN_TIMEOUT_MS):
                 self._process.kill()
                 self._process.waitForFinished()
         if self._directory is not None:

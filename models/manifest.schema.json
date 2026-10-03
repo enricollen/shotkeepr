@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ShotKeepr model manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "models"],
+  "properties": {
+    "schema_version": {"const": 1, "type": "integer"},
+    "models": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["model_id", "version", "url", "sha256", "size_bytes", "license", "license_url", "source_url"],
+        "properties": {
+          "model_id": {"type": "string", "pattern": "^[a-z][a-z0-9-]{0,47}$"},
+          "version": {"type": "string", "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,47}$"},
+          "url": {"type": "string", "format": "uri", "pattern": "^https://"},
+          "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+          "size_bytes": {"type": "integer", "minimum": 1},
+          "license": {"enum": ["MIT", "Apache-2.0", "BSD-2-Clause", "BSD-3-Clause", "CC0-1.0"]},
+          "license_url": {"type": "string", "format": "uri", "pattern": "^https://"},
+          "source_url": {"type": "string", "format": "uri", "pattern": "^https://"}
+        }
+      }
+    }
+  }
+}

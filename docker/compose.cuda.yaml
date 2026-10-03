@@ -1,0 +1,13 @@
+services:
+  core:
+    image: shotkeepr-core:cuda
+    build:
+      args:
+        RUNTIME: cuda
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]

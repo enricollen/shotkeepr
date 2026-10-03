@@ -1,0 +1,15 @@
+FROM qdrant/qdrant:v1.15.5
+USER root
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd --gid 1000 shotkeepr-qdrant \
+    && useradd --uid 1000 --gid 1000 --no-create-home shotkeepr-qdrant \
+    && mkdir -p /qdrant/storage \
+    && chown 1000:1000 /qdrant/storage
+ENV QDRANT__STORAGE__SNAPSHOTS_PATH=/qdrant/storage/snapshots \
+    QDRANT_INIT_FILE_PATH=/qdrant/storage/.qdrant-initialized \
+    QDRANT__TELEMETRY_DISABLED=true
+USER 1000:1000
+HEALTHCHECK --interval=10s --timeout=3s --start-period=20s --retries=3 \
+    CMD ["curl", "--fail", "--silent", "--show-error", "--max-time", "2", "http://127.0.0.1:6333/readyz"]

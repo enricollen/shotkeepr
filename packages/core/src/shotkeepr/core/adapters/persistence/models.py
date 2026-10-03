@@ -99,6 +99,8 @@ class GroupRow(Base):
     )
     kind: Mapped[str] = mapped_column(String(16))
     is_manual: Mapped[bool] = mapped_column(Boolean, default=False)
+    camera_model: Mapped[str | None] = mapped_column(String(120))
+    camera_serial: Mapped[str | None] = mapped_column(String(120))
 
 
 class ShotRow(Base):
@@ -231,3 +233,54 @@ class AppSettingsRow(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     data: Mapped[dict[str, Any]]
     updated_at: Mapped[datetime] = mapped_column(TS)
+
+
+class ExposureMeasurementRow(Base):
+    __tablename__ = "exposure_measurements"
+    shot_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("shots.id", ondelete="CASCADE"), primary_key=True
+    )
+    source_fingerprint: Mapped[str] = mapped_column(String(64))
+    preview_sha256: Mapped[str] = mapped_column(String(64))
+    analyzer_version: Mapped[str] = mapped_column(String(120))
+    measured_at: Mapped[datetime] = mapped_column(TS)
+    width: Mapped[int] = mapped_column(Integer)
+    height: Mapped[int] = mapped_column(Integer)
+    mean_luma: Mapped[float] = mapped_column(Float)
+    highlights_fraction: Mapped[float] = mapped_column(Float)
+    shadows_fraction: Mapped[float] = mapped_column(Float)
+
+
+class ShotReviewRow(Base):
+    __tablename__ = "shot_reviews"
+    shot_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("shots.id", ondelete="CASCADE"), primary_key=True
+    )
+    status: Mapped[str] = mapped_column(String(8))
+    updated_at: Mapped[datetime] = mapped_column(TS)
+
+
+class BurstGroupingRow(Base):
+    __tablename__ = "burst_grouping"
+    session_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("sessions.id", ondelete="CASCADE"), primary_key=True
+    )
+    gap_seconds: Mapped[float] = mapped_column(Float)
+    method_version: Mapped[str] = mapped_column(String(120))
+    input_sha256: Mapped[str] = mapped_column(String(64))
+    grouped_at: Mapped[datetime] = mapped_column(TS)
+
+
+class SharpnessMeasurementRow(Base):
+    __tablename__ = "sharpness_measurements"
+    shot_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("shots.id", ondelete="CASCADE"), primary_key=True
+    )
+    source_fingerprint: Mapped[str] = mapped_column(String(64))
+    preview_sha256: Mapped[str] = mapped_column(String(64))
+    analyzer_version: Mapped[str] = mapped_column(String(120))
+    measured_at: Mapped[datetime] = mapped_column(TS)
+    width: Mapped[int] = mapped_column(Integer)
+    height: Mapped[int] = mapped_column(Integer)
+    laplacian_variance: Mapped[float] = mapped_column(Float)
+    gradient_energy: Mapped[float] = mapped_column(Float)
